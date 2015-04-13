@@ -1,0 +1,28 @@
+#compdef pr
+ 
+local arguments
+ 
+_branch(){
+    val=()
+
+    git branch | grep -v "\*" | while read -r branch ; do
+        val=($val $branch)
+    done
+}
+ 
+local expl
+local -a val
+ 
+arguments=(
+'--branch[The git branch]: :->branch'
+'-m[Your message]::'
+)
+ 
+case "$state" in
+    branch)
+        _branch
+        _wanted val expl "Branches" compadd -a val
+        ;;  
+esac
+ 
+_arguments $arguments
