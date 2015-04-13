@@ -1,0 +1,7 @@
+paths/
+modules/keys
+modules/local
+modules/scratch_pad
+users/**
+vars
+.config

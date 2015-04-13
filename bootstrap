@@ -1,0 +1,199 @@
+# set the directory where this is installed to
+export ENVIRONMENT_LOCATION=`dirname $0`
+
+fpath=($ENVIRONMENT_LOCATION/zsh_completions/**/ $fpath)
+
+no_color='\033[0m' # No Color
+yellow='\033[0;33m'
+red='\033[0;31m'
+cyan='\033[0;36m'
+
+function log-info(){
+	log-color $cyan "$@"
+}
+
+function log-warn(){
+	log-color $yellow "$@"
+}
+
+function log-error(){	
+	log-color $red "$@"
+}
+
+function log-color(){
+	color=$1
+
+	shift
+
+	echo -e "${color}$@${NC}"
+}
+
+function _setpref(){
+    config_file=$ENVIRONMENT_LOCATION/.config
+
+    if [ ! -f $config_file ]; then
+        touch $config_file
+    fi
+
+    echo "$1:$2" >> $config_file
+}
+
+function _readpref(){
+    cat $ENVIRONMENT_LOCATION/.config 2>/dev/null | grep $1 | awk -F ":" '{ print $2 }'
+}
+
+function install-default-editor(){
+    edit_pref=`_readpref "editor"`
+
+    if [ -z $edit_pref ] && ! hash atom 2>/dev/null; then
+        log-warn "Would you like to install a default user editor? Atom is free and can be installed with cask"
+        log-warn "If you would like to install this? It is recommended (y/n)"
+
+        read installAtom
+
+        if [ $installAtom = "y" ]; then
+            brew cask install atom
+            _setpref "editor" "y"
+        else
+            _setpref "editor" "n"
+        fi
+    fi
+}
+
+function install-yadr(){
+    ### install yadr, at least ask once
+    if [ ! -d $HOME/.yadr ]; then
+    
+        install_pref=`_readpref "yadr"`
+
+        if [ -z $install_pref ]; then
+            log-warn "Missing yadr.  YADR (yet another dot file repo) is incredibly useful. Do you want to install it? Your preference will be rememembered (y/n)"
+
+            read installYadr
+
+            if [ $installYadr = "y" ]; then
+                sh -c "`curl -fsSL https://raw.githubusercontent.com/skwp/dotfiles/master/install.sh`"
+            else
+                _setpref "yadr" "n"
+            fi
+        fi;
+    fi
+}
+
+function install-brew-cask(){
+    # install cask binary installer https://github.com/caskroom/homebrew-cask
+    cask_installed=`brew list | grep cask`
+
+    if [ -z $cask_installed ]; then
+        log-warn "Cask not installed, installing..."
+
+        brew install caskroom/cask/brew-cask
+    fi;
+}
+
+function install-prereqs(){
+    hash python 2>/dev/null || { brew python }
+
+    hash pip 2>/dev/null || { sudo easy_install pip }
+
+    install-yadr
+
+    ## just a warning on the hub OAUTH
+    if [ ! -f $HOME/.config/hub ]; then
+        log-warn "*****"
+        log-warn "The hub config is missing.  You should execute a hub command to get your oauth hub token installed."
+        log-warn 
+        log-warn "Try doing a  'hub commit' in a repo. Without this commands like 'pr' wont work properly and may silently fail."
+    fi
+
+    install-brew-cask
+
+    install-default-editor
+}
+
+function set_zsh_options(){
+    # let aliases be re-autocompleted by zsh
+    setopt complete_aliases
+
+    # dont have directories auto named by their variables
+    # http://stackoverflow.com/a/17104442/310196
+    unsetopt auto_name_dirs
+}
+
+function load-basic-modules(){
+    for module_file ($ENVIRONMENT_LOCATION/modules/**) do;
+        if [ -f $module_file ]; then 
+            log-info "Loading $module_file"
+            source $module_file
+       fi
+    done
+}
+
+function load-user-modules(){
+    userModulePath=$ENVIRONMENT_LOCATION/users
+
+    if [ -d $userModulePath ]; then
+        ## follow all sym links and load all the files 
+        ## (.N) is the zsh global identifier to suppress no results
+        for module_file in `ls -1LRd $userModulePath/*/*.sh(.N)`;
+        do
+            if [ -f $module_file ]; then 
+                log-info "Loading user module $module_file"
+                source $module_file
+            fi
+        done    
+    fi
+}
+
+function load-source-path(){
+    if [ -z $SRC_DIR ]; then
+        srcpath=`_readpref "src-path"`
+
+        if [ -z $srcpath ]; then
+            log-warn "Source path isn't defined!"
+            log-warn "What is the path where your source code is defined? For example '~/documents/sourecode'?"
+            read srcpath
+
+            srcpath=`echo $srcpath | sed "s;~;$HOME;"`
+            
+            _setpref "src-path" $srcpath
+        fi
+
+        export SRC_DIR=$srcpath
+    fi;
+}
+
+function validate(){
+    if [ -z $GIT_TOKEN ]; then
+        log-warn "No 'GIT_TOKEN' env variable was found. This is the OAUTH token from github enterprise"
+        log-warn "To generate a new token visit:"
+        log-warn
+        log-warn "https://github.secureserver.net/settings/tokens/new"
+        log-warn
+        log-warn "Once that token is set, export the variable in the file $ENVIRONMENT_LOCATION/modules/keys"
+    fi;
+}
+
+# set default zsh options
+set_zsh_options
+
+# make sure the source code dir is set
+load-source-path
+
+# load up any pending required installables
+install-prereqs
+
+# load basic modules
+load-basic-modules
+
+# load user modules
+load-user-modules
+
+# reload compinit now that everything is loaded up
+# so that the updated $fpath variable's folders get 
+# read. this lets the custom zsh_completions folder
+# get leveraged
+reload-compinit
+
+# final validation 
+validate

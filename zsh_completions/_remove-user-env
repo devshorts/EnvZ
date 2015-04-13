@@ -1,0 +1,26 @@
+#compdef remove-user-env
+ 
+local arguments
+ 
+_userenv(){
+    val=()
+
+    for x in $HOME/custom_shells/users/*;
+        val=($val `basename $x`)   
+}
+ 
+local expl
+local -a val
+ 
+arguments=(
+"1: :->env"
+)
+ 
+case "$state" in
+    env)
+        _userenv
+        _wanted val expl "Environment" compadd -a val
+        ;;  
+esac
+ 
+_arguments $arguments

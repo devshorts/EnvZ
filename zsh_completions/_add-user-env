@@ -1,0 +1,9 @@
+#compdef add-user-env
+
+local arguments
+
+arguments=(
+'1: :_path_files'
+)
+
+_arguments -s $arguments

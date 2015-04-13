@@ -1,0 +1,1 @@
+alias proxycurl="curl -v --proxy localhost:8888"
