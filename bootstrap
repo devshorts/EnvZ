@@ -9,23 +9,23 @@ red='\033[0;31m'
 cyan='\033[0;36m'
 
 function log-info(){
-	log-color $cyan "$@"
+    log-color $cyan "$@"
 }
 
 function log-warn(){
-	log-color $yellow "$@"
+    log-color $yellow "$@"
 }
 
-function log-error(){	
-	log-color $red "$@"
+function log-error(){   
+    log-color $red "$@"
 }
 
 function log-color(){
-	color=$1
+    color=$1
 
-	shift
+    shift
 
-	echo -e "${color}$@${NC}"
+    echo -e "${color}$@${NC}"
 }
 
 function _setpref(){
@@ -95,6 +95,9 @@ function install-prereqs(){
     hash python 2>/dev/null || { brew python }
 
     hash pip 2>/dev/null || { sudo easy_install pip }
+
+    # command line json parsing
+    hash jq 2>/dev/null || { brew install jq }
 
     install-yadr
 
