@@ -1,5 +1,21 @@
+function set_zsh_options(){
+    # let aliases be re-autocompleted by zsh
+    #setopt complete_aliases
+
+    # dont have directories auto named by their variables
+    # http://stackoverflow.com/a/17104442/310196
+    unsetopt auto_name_dirs
+}
+
+set_zsh_options
+
 # set the directory where this is installed to
 export ENVIRONMENT_LOCATION=`dirname $0`
+
+export USER_MODULES=$ENVIRONMENT_LOCATION/users
+
+
+export SOURCE_UTILS=$ENVIRONMENT_LOCATION/modules/00_env_tools
 
 fpath=($ENVIRONMENT_LOCATION/zsh_completions/**/ $fpath)
 
@@ -9,37 +25,127 @@ red='\033[0;31m'
 cyan='\033[0;36m'
 
 function log-info(){
-    log-color $cyan "$@"
+	log-color $cyan "$@"
 }
 
 function log-warn(){
-    log-color $yellow "$@"
+	log-color $yellow "$@"
 }
 
-function log-error(){   
-    log-color $red "$@"
+function log-error(){	
+	log-color $red "$@"
 }
 
 function log-color(){
-    color=$1
+	color=$1
 
-    shift
+	shift
 
-    echo -e "${color}$@${NC}"
+	echo -e "${color}$@${NC}"
+}
+
+_ensure_json_config() {
+    local config_file=$ENVIRONMENT_LOCATION/.config.json
+    
+    if [ ! -f $config_file ]; then
+        echo '{}' > $config_file
+    fi
+}
+
+json_set_pref() {
+    local config_file=$ENVIRONMENT_LOCATION/.config.json
+
+    _ensure_json_config
+    
+    if [ $# -eq 3 ]; then
+        local Category=$1
+        local Setting=$2
+        local Value=$3
+    elif [ $# -eq 2 ]; then
+        local Category='general_settings'
+        local Setting=$1
+        local Value=$2
+    else
+        log-error 'Not enough args!'
+        return
+    fi
+
+    settings=$(jq ".\"$Category\".\"$Setting\" = \"$Value\"" $config_file)
+    
+    if [ $? -eq 0 ]; then
+        echo $settings >! $config_file
+    fi
+}
+
+_clean_old_config() {
+    local config_file=$ENVIRONMENT_LOCATION/.config
+    if [ -f $config_file ]; then
+        rm $config_file
+    fi
+}
+
+_migrate_old_config() {
+    local config_file=$ENVIRONMENT_LOCATION/.config
+
+    if [ -f $config_file ]; then 
+        log-info 'Found old config, migrating to json config'
+
+        _migrate_to_json() {
+            while read data; do
+                if [ -z $data ]; then
+                    continue
+                fi
+                local -a args
+                args=(${=data})
+                log-info "Migrating setting key: '${args[1]}' value: '${args[2]}'"
+                json_set_pref $args
+            done
+        }
+
+        awk -F ':' '{ print $1, $2 }' $config_file | _migrate_to_json
+        json_settings
+
+        # _clean_old_config
+    fi
+}
+
+json_settings() {
+    local config_file=$ENVIRONMENT_LOCATION/.config.json
+    _ensure_json_config
+
+    jq "." $config_file
+}
+
+json_get_pref() {
+    local config_file=$ENVIRONMENT_LOCATION/.config.json
+    _ensure_json_config
+    
+    if [ $# -eq 2 ]; then
+        local Category=$1
+        local Setting=$2
+    elif [ $# -eq 1 ]; then
+        local Category='general_settings'
+        local Setting=$1
+    else
+        log-error 'Not enough args!'
+        return
+    fi
+
+    jq ".\"$Category\".\"$Setting\" // \"\"" $config_file | sed 's/^"//' | sed 's/"$//'
+}
+
+function _reset_pref(){
+    local pref=$1
+
+    json_set_pref "$pref" ""
 }
 
 function _setpref(){
-    config_file=$ENVIRONMENT_LOCATION/.config
-
-    if [ ! -f $config_file ]; then
-        touch $config_file
-    fi
-
-    echo "$1:$2" >> $config_file
+    json_set_pref $1 $2
 }
 
 function _readpref(){
-    cat $ENVIRONMENT_LOCATION/.config 2>/dev/null | grep $1 | awk -F ":" '{ print $2 }'
+    json_get_pref $1
 }
 
 function install-default-editor(){
@@ -91,22 +197,24 @@ function install-brew-cask(){
     fi;
 }
 
+function ensure_jq() {
+    # command line json parsing
+    hash jq 2>/dev/null || { brew install jq }
+}
+
 function install-prereqs(){
     hash python 2>/dev/null || { brew python }
 
     hash pip 2>/dev/null || { sudo easy_install pip }
 
-    # command line json parsing
-    hash jq 2>/dev/null || { brew install jq }
+    hash wget  2>/dev/null || { brew install wget }
 
     install-yadr
 
     ## just a warning on the hub OAUTH
     if [ ! -f $HOME/.config/hub ]; then
         log-warn "*****"
-        log-warn "The hub config is missing.  You should execute a hub command to get your oauth hub token installed."
-        log-warn 
-        log-warn "Try doing a  'hub commit' in a repo. Without this commands like 'pr' wont work properly and may silently fail."
+        log-warn "The hub config is missing. Run 'init-hub' to repair"        
     fi
 
     install-brew-cask
@@ -114,14 +222,7 @@ function install-prereqs(){
     install-default-editor
 }
 
-function set_zsh_options(){
-    # let aliases be re-autocompleted by zsh
-    setopt complete_aliases
 
-    # dont have directories auto named by their variables
-    # http://stackoverflow.com/a/17104442/310196
-    unsetopt auto_name_dirs
-}
 
 function load-basic-modules(){
     for module_file ($ENVIRONMENT_LOCATION/modules/**) do;
@@ -140,11 +241,29 @@ function load-user-modules(){
         ## (.N) is the zsh global identifier to suppress no results
         for module_file in `ls -1LRd $userModulePath/*/*.sh(.N)`;
         do
-            if [ -f $module_file ]; then 
+            name=`basename $module_file`
+
+            if [[ -f $module_file && $name != "validate.sh" ]]; then 
                 log-info "Loading user module $module_file"
+
+                USER_MODULE_PATH=`dirname \`get_abs_filename $module_file\``
+
                 source $module_file
             fi
         done    
+
+        # once they are all loaded, run the validation
+
+        for validation_file in `ls -1LRd $userModulePath/*/validate.sh(.N)`;
+        do
+            if [ -f $validation_file ]; then 
+                log-info "Executing validation on user module $module_file"
+
+                USER_MODULE_PATH=`dirname \`get_abs_filename $validation_file\``
+
+                source $validation_file
+            fi
+        done   
     fi
 }
 
@@ -166,6 +285,10 @@ function load-source-path(){
     fi;
 }
 
+function set-permissions(){
+    chmod +x $ENVIRONMENT_LOCATION/modules/scripts/git-diffall
+}
+
 function validate(){
     if [ -z $GIT_TOKEN ]; then
         log-warn "No 'GIT_TOKEN' env variable was found. This is the OAUTH token from github enterprise"
@@ -177,8 +300,11 @@ function validate(){
     fi;
 }
 
-# set default zsh options
-set_zsh_options
+# install jq for config
+ensure_jq
+
+# migrate the old .config file to json if needed
+_migrate_old_config
 
 # make sure the source code dir is set
 load-source-path
@@ -188,6 +314,8 @@ install-prereqs
 
 # load basic modules
 load-basic-modules
+
+set-permissions
 
 # load user modules
 load-user-modules

@@ -13,17 +13,29 @@ Things like
 - useful aliases 
 - useful autocompletes
 
-It also supports custom user modules (for example, [here is mine](https://github.secureserver.net/akropp/local_environment))
+It also supports custom user modules
 
-Clone the repo wherever you want, and add 
+Clone the repo wherever you want and to install run:
 
+```
+brew install zsh > /dev/null 2>&1;
+chsh -s $(which zsh); 
+if [ ! -f "~/.zshrc" ];
+    touch ~/.zshrc
+fi
+echo ". `pwd`/EnvZ/bootstrap" >> ~/.zshrc
+```
+
+Then restart your terminal.
+
+If you already have zsh installed, then just add the following to the bottom of your .zshrc file
 ```
 . <path>/EnvZ/bootstrap
 ```
 
-To the bottom of your .zshrc file and 
-
 The bootstrapper may prompt or install required items (such as python) and give you the option to install a default editor or other items
+
+When updates are pushed just execute `reload-env`
 
 ## Source directory
 
@@ -55,5 +67,7 @@ To remove a custom folder do
 ```
 remove-user-env ...
 ```
+
+You can add custom validation to your modules that will run after all other modules are run by creating a `validate.sh` file in your module.  This file WILL NOT get run during the initial load, and only run after the fact.
 
 And it will give you autocomplete on your installed plugins

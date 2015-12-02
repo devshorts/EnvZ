@@ -1,0 +1,10 @@
+#compdef execute-remote
+
+local arguments
+
+arguments=(
+'1: :_hosts'
+'2:File to execute:_path_files'
+)
+
+_arguments -s $arguments

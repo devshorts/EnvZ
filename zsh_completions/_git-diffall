@@ -1,0 +1,32 @@
+#compdef git-diffall
+ 
+local arguments
+ 
+_get_git_values(){
+    raw=`git log -n 20 | awk '{ hash=$1; desc=substr($0, index($0, $8)); print hash}' | sed "s/:/\:/g"`
+
+    val=()
+
+    echo $raw | while read -r item ; do
+        val=($val "$item:\"biz\"")
+    done
+
+    _describe -t values 'commands' val
+}
+ 
+local expl
+local -a val
+ 
+arguments=(
+'--cached[Compare to the index rather than the working tree]'
+'--copy-back[Copy files back to the working tree when the diff tool exits (in case they were modified by the user).  This option is only valid if the diff compared with the working tree.]'
+'-x[Command]::'
+)
+ 
+case "$state" in
+   commit)
+        _get_git_values
+        ;;  
+esac
+ 
+_arguments $arguments

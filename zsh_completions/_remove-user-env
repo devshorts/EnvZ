@@ -5,7 +5,7 @@ local arguments
 _userenv(){
     val=()
 
-    for x in $HOME/custom_shells/users/*;
+    for x in $USER_MODULES/*;
         val=($val `basename $x`)   
 }
  
@@ -19,7 +19,7 @@ arguments=(
 case "$state" in
     env)
         _userenv
-        _wanted val expl "Environment" compadd -a val
+        _wanted val expl "User modules" compadd -a val
         ;;  
 esac
  
