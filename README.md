@@ -12,6 +12,7 @@ Things like
 - useful autocompletes
 - adding cutom user modules
 - simplifying installing via brew
+- easy way to update your environment 
 
 Clone the repo wherever you want and just add the following to the bottom of your .zshrc file
 ```
@@ -25,6 +26,12 @@ When updates are pushed just execute `reload-env`
 ## Source directory
 
 A key part of the environment is knowing where you store your source code. When the environment first starts it may ask you to put in where you source code exists.  Environment variables will work as well as `~`. All stored settings are put into the `.config` file. If you mess up, blow the file out.
+
+This is nice because you can go to a coworkers machine and just type `src` in the shell and go to their source folder. Now everyone works in the same logical directory structure even though the physical directory structure is different
+
+## Updating 
+
+If you have linked modules, you can easily update all of them by doing `update-env` (assuming they are all git folders) and envz will do a git pull on all of them.
 
 ## Sensitive information
 
