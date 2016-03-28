@@ -7,28 +7,13 @@ Preqreqs: ZSH.  Install [YADR](https://github.com/skwp/dotfiles) to simplify thi
 
 Things like
 
-- Installing YADR (if already on zsh)
-- Installing a default editor ([atom](https://atom.io/))
-- Ensuring that your `hub` wrapper has git OAUTH credentials and that it auto points to github enterprise
+- Installing a default editor ([atom](https://atom.io/)) and mapping it to `e` in the terminal
 - useful aliases 
 - useful autocompletes
+- adding cutom user modules
+- simplifying installing via brew
 
-It also supports custom user modules
-
-Clone the repo wherever you want and to install run:
-
-```
-brew install zsh > /dev/null 2>&1;
-chsh -s $(which zsh); 
-if [ ! -f "~/.zshrc" ];
-    touch ~/.zshrc
-fi
-echo ". `pwd`/EnvZ/bootstrap" >> ~/.zshrc
-```
-
-Then restart your terminal.
-
-If you already have zsh installed, then just add the following to the bottom of your .zshrc file
+Clone the repo wherever you want and just add the following to the bottom of your .zshrc file
 ```
 . <path>/EnvZ/bootstrap
 ```
@@ -71,3 +56,5 @@ remove-user-env ...
 You can add custom validation to your modules that will run after all other modules are run by creating a `validate.sh` file in your module.  This file WILL NOT get run during the initial load, and only run after the fact.
 
 And it will give you autocomplete on your installed plugins
+
+For more information about use cases see this [blog post](http://onoffswitch.net/shareable-zsh-environment-envz/)
