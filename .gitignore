@@ -4,4 +4,5 @@ modules/local
 modules/scratch_pad
 users/**
 vars
-.config
+**/.config
+**/.config.json

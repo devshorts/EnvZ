@@ -32,7 +32,7 @@ function log-warn(){
 	log-color $yellow "$@"
 }
 
-function log-error(){	
+function log-error(){
 	log-color $red "$@"
 }
 
@@ -46,7 +46,7 @@ function log-color(){
 
 _ensure_json_config() {
     local config_file=$ENVIRONMENT_LOCATION/.config.json
-    
+
     if [ ! -f $config_file ]; then
         echo '{}' > $config_file
     fi
@@ -56,7 +56,7 @@ json_set_pref() {
     local config_file=$ENVIRONMENT_LOCATION/.config.json
 
     _ensure_json_config
-    
+
     if [ $# -eq 3 ]; then
         local Category=$1
         local Setting=$2
@@ -71,7 +71,7 @@ json_set_pref() {
     fi
 
     settings=$(jq ".\"$Category\".\"$Setting\" = \"$Value\"" $config_file)
-    
+
     if [ $? -eq 0 ]; then
         echo $settings >! $config_file
     fi
@@ -87,7 +87,7 @@ _clean_old_config() {
 _migrate_old_config() {
     local config_file=$ENVIRONMENT_LOCATION/.config
 
-    if [ -f $config_file ]; then 
+    if [ -f $config_file ]; then
         log-info 'Found old config, migrating to json config'
 
         _migrate_to_json() {
@@ -119,7 +119,7 @@ json_settings() {
 json_get_pref() {
     local config_file=$ENVIRONMENT_LOCATION/.config.json
     _ensure_json_config
-    
+
     if [ $# -eq 2 ]; then
         local Category=$1
         local Setting=$2
@@ -169,7 +169,7 @@ function install-default-editor(){
 function install-yadr(){
     ### install yadr, at least ask once
     if [ ! -d $HOME/.yadr ]; then
-    
+
         install_pref=`_readpref "yadr"`
 
         if [ -z $install_pref ]; then
@@ -188,9 +188,9 @@ function install-yadr(){
 
 function install-brew-cask(){
     # install cask binary installer https://github.com/caskroom/homebrew-cask
-    cask_installed=`brew list | grep cask`
+    cask_installed=`brew cask`
 
-    if [ -z $cask_installed ]; then
+    if [ "$?" != "0" ]; then
         log-warn "Cask not installed, installing..."
 
         brew install caskroom/cask/brew-cask
@@ -211,12 +211,6 @@ function install-prereqs(){
 
     install-yadr
 
-    ## just a warning on the hub OAUTH
-    if [ ! -f $HOME/.config/hub ]; then
-        log-warn "*****"
-        log-warn "The hub config is missing. Run 'init-hub' to repair"        
-    fi
-
     install-brew-cask
 
     install-default-editor
@@ -226,7 +220,7 @@ function install-prereqs(){
 
 function load-basic-modules(){
     for module_file ($ENVIRONMENT_LOCATION/modules/**) do;
-        if [ -f $module_file ]; then 
+        if [ -f $module_file ]; then
             log-info "Loading $module_file"
             source $module_file
        fi
@@ -237,33 +231,33 @@ function load-user-modules(){
     userModulePath=$ENVIRONMENT_LOCATION/users
 
     if [ -d $userModulePath ]; then
-        ## follow all sym links and load all the files 
+        ## follow all sym links and load all the files
         ## (.N) is the zsh global identifier to suppress no results
         for module_file in `ls -1LRd $userModulePath/*/*.sh(.N)`;
         do
             name=`basename $module_file`
 
-            if [[ -f $module_file && $name != "validate.sh" ]]; then 
+            if [[ -f $module_file && $name != "validate.sh" ]]; then
                 log-info "Loading user module $module_file"
 
                 USER_MODULE_PATH=`dirname \`get_abs_filename $module_file\``
 
                 source $module_file
             fi
-        done    
+        done
 
         # once they are all loaded, run the validation
 
         for validation_file in `ls -1LRd $userModulePath/*/validate.sh(.N)`;
         do
-            if [ -f $validation_file ]; then 
+            if [ -f $validation_file ]; then
                 log-info "Executing validation on user module $module_file"
 
                 USER_MODULE_PATH=`dirname \`get_abs_filename $validation_file\``
 
                 source $validation_file
             fi
-        done   
+        done
     fi
 }
 
@@ -277,7 +271,7 @@ function load-source-path(){
             read srcpath
 
             srcpath=`echo $srcpath | sed "s;~;$HOME;"`
-            
+
             _setpref "src-path" $srcpath
         fi
 
@@ -290,14 +284,7 @@ function set-permissions(){
 }
 
 function validate(){
-    if [ -z $GIT_TOKEN ]; then
-        log-warn "No 'GIT_TOKEN' env variable was found. This is the OAUTH token from github enterprise"
-        log-warn "To generate a new token visit:"
-        log-warn
-        log-warn "https://github.secureserver.net/settings/tokens/new"
-        log-warn
-        log-warn "Once that token is set, export the variable in the file $ENVIRONMENT_LOCATION/modules/keys"
-    fi;
+    log-info "READY"
 }
 
 # install jq for config
@@ -321,10 +308,10 @@ set-permissions
 load-user-modules
 
 # reload compinit now that everything is loaded up
-# so that the updated $fpath variable's folders get 
+# so that the updated $fpath variable's folders get
 # read. this lets the custom zsh_completions folder
 # get leveraged
 reload-compinit
 
-# final validation 
+# final validation
 validate
