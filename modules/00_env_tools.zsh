@@ -1,3 +1,5 @@
+#!/usr/bin/env zsh
+
 local_path=`dirname $0:A`
 
 #zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z-_}={A-Za-z_-}'
@@ -89,7 +91,7 @@ function brew-install(){
     fi
 
     hash $prog 2>/dev/null
-    
+
     if [ $? != 0 ]; then
         log-info "Installing $prog"
 

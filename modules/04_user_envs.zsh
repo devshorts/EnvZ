@@ -1,3 +1,5 @@
+#!/usr/bin/env zsh
+
 function add-user-env(){
 
     usage="Add a user custom environment: link-user-env <directory containing your shells scripts>"
@@ -8,7 +10,7 @@ function add-user-env(){
     fi;
 
     userEnvDirectory=$1
-    
+
     fileName=$(basename "$userEnvDirectory")
 
     user_modules=$USER_MODULES

@@ -1,3 +1,5 @@
+#!/usr/bin/env zsh
+
 function set_zsh_options(){
     # let aliases be re-autocompleted by zsh
     #setopt complete_aliases

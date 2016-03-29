@@ -1,4 +1,6 @@
-export GIT_BASE_URL="https://github.secureserver.net"
+#!/usr/bin/env zsh
+
+export GIT_BASE_URL="https://github.com"
 
 function create-branch(){
     git checkout -b "$@"
@@ -80,7 +82,7 @@ function latest-pr(){
 
 function get-git-remote(){
     remotes=()
-    
+
     git remote -v |  while read f
     do
         remotes=($remotes $f)
@@ -128,7 +130,7 @@ function pr(){
 
     while [ "$1" != "" ]; do
         PARAM="$1"
-        
+
         VALUE="$2"
 
         case $PARAM in
@@ -152,7 +154,7 @@ function pr(){
         shift
     done
 
-    query="hub pull-request -m \"$message\" -b $branch" 
+    query="hub pull-request -m \"$message\" -b $branch"
 
     echo "Create pull request: $query?"
 
