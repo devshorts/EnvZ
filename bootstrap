@@ -317,3 +317,14 @@ reload-compinit
 
 # final validation
 validate
+
+if [ "$1" = "bash" ]; then
+  log-info "Path logged to ~/.paths"
+  echo $PATH >! ~/.paths
+
+  rm -rf ~/.aliases
+
+  while read -r line; do
+    echo "alias ${line}" >> ~/.aliases
+  done <<< `alias | grep '='`
+fi
