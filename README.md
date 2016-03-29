@@ -25,7 +25,7 @@ When updates are pushed just execute `reload-env`
 
 ## Bash support
 
-It is possible to get some functionality with bash, though aliases and other shell specifics wont work.
+It is possible to get some functionality with bash such as installation, paths, and aliases, though other shell specifics wont work.
 
 To do so add this into your .bashrc
 
