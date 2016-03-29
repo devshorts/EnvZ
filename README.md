@@ -31,10 +31,13 @@ To do so add this into your .bashrc
 
 ```
 # run envz
-zsh <PATH-TO>/EnvZ/bootstrap path
+zsh <PATH-TO>/EnvZ/bootstrap bash
 
 # source in the exported paths
 export PATH=$PATH:`cat ~/.paths`
+
+# source exported aliases
+. ~/.aliases
 
 # clear colors
 echo -e "\033[0m"
