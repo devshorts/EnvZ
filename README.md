@@ -23,6 +23,23 @@ The bootstrapper may prompt or install required items (such as python) and give 
 
 When updates are pushed just execute `reload-env`
 
+## Bash support
+
+It is possible to get some functionality with bash, though aliases and other shell specifics wont work.
+
+To do so add this into your .bashrc
+
+```
+# run envz
+zsh <PATH-TO>/EnvZ/bootstrap path
+
+# source in the exported paths
+export PATH=$PATH:`cat ~/.paths`
+
+# clear colors
+echo -e "\033[0m"
+```
+
 ## Source directory
 
 A key part of the environment is knowing where you store your source code. When the environment first starts it may ask you to put in where you source code exists.  Environment variables will work as well as `~`. All stored settings are put into the `.config` file. If you mess up, blow the file out.
