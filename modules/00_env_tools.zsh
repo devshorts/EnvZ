@@ -128,9 +128,14 @@ function reload-compinit(){
 }
 
 function reload(){
+  is_zsh=`ps $$ | grep zsh`
+  if [ "$?" = "0" ]; then
     source ~/.zshrc
 
     reload-compinit
+  else
+    source ~/.bashrc
+  fi
 }
 
 # default editor
