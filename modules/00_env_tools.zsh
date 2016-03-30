@@ -1,8 +1,6 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
 
 local_path=`dirname $0:A`
-
-#zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z-_}={A-Za-z_-}'
 
 PATH=$PATH:$local_path/scripts
 

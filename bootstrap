@@ -1,4 +1,12 @@
-#!/usr/bin/env zsh
+#!/usr/bin bash
+
+
+# set the directory where this is installed to
+export ENVIRONMENT_LOCATION=`dirname $0`
+
+export USER_MODULES=$ENVIRONMENT_LOCATION/users
+
+export SOURCE_UTILS=$ENVIRONMENT_LOCATION/modules/00_env_tools
 
 function set_zsh_options(){
     # let aliases be re-autocompleted by zsh
@@ -9,17 +17,13 @@ function set_zsh_options(){
     unsetopt auto_name_dirs
 }
 
-set_zsh_options
+if [ "$SHELL" = "/bin/zsh" ]; then
+  set_zsh_options
 
-# set the directory where this is installed to
-export ENVIRONMENT_LOCATION=`dirname $0`
-
-export USER_MODULES=$ENVIRONMENT_LOCATION/users
-
-
-export SOURCE_UTILS=$ENVIRONMENT_LOCATION/modules/00_env_tools
-
-fpath=($ENVIRONMENT_LOCATION/zsh_completions/**/ $fpath)
+  fpath=($ENVIRONMENT_LOCATION/zsh_completions/**/ $fpath)
+else
+  shopt -s globstar
+fi
 
 no_color='\033[0m' # No Color
 yellow='\033[0;33m'
@@ -219,14 +223,11 @@ function install-prereqs(){
 }
 
 
-
 function load-basic-modules(){
-    for module_file ($ENVIRONMENT_LOCATION/modules/**) do;
-        if [ -f $module_file ]; then
-            log-info "Loading $module_file"
-            source $module_file
-       fi
-    done
+  find $ENVIRONMENT_LOCATION/modules -type f -iname '*.zsh' -print0 | while IFS= read -r -d $'\0' module_file; do
+        log-info "Loading $module_file"
+        . $module_file
+  done
 }
 
 function load-user-modules(){
