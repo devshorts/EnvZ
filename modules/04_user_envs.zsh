@@ -1,7 +1,4 @@
-#!/usr/bin/env bash
-
 function add-user-env(){
-
     usage="Add a user custom environment: link-user-env <directory containing your shells scripts>"
 
     if [ $# -eq 0 ]; then

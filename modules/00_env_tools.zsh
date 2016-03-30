@@ -1,6 +1,10 @@
-#!/usr/bin/env bash
-
-local_path=`dirname $0:A`
+is_zsh=`ps $$ | grep zsh`
+if [ "$?" = "0" ]; then
+  local_path=`dirname $0:A`
+else
+  # make sure bash gets the env var location
+  local_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+fi
 
 PATH=$PATH:$local_path/scripts
 
@@ -9,12 +13,16 @@ function edit-env-conf(){
 }
 
 function get_abs_filename() {
-  # $1 : relative filename
-  curr=`pwd`
-
-  echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
-
-  cd $curr
+  perl -MCwd -le '
+    for (@ARGV) {
+      if ($p = Cwd::abs_path $_) {
+        print $p;
+      } else {
+        warn "abs_path: $_: $!\n";
+        $ret = 1;
+      }
+    }
+    exit $ret' "$@"
 }
 
 function execute-remote(){

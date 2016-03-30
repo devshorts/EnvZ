@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 export GIT_BASE_URL="https://github.com"
 
 function create-branch(){

@@ -1,12 +1,6 @@
 #!/usr/bin bash
 
-
 # set the directory where this is installed to
-export ENVIRONMENT_LOCATION=`dirname $0`
-
-export USER_MODULES=$ENVIRONMENT_LOCATION/users
-
-export SOURCE_UTILS=$ENVIRONMENT_LOCATION/modules/00_env_tools
 
 function set_zsh_options(){
     # let aliases be re-autocompleted by zsh
@@ -17,13 +11,23 @@ function set_zsh_options(){
     unsetopt auto_name_dirs
 }
 
-if [ "$SHELL" = "/bin/zsh" ]; then
+## ZSH specific stuff
+is_zsh=`ps $$ | grep zsh`
+if [ "$?" = "0" ]; then
+  export ENVIRONMENT_LOCATION=`dirname $0`
+
   set_zsh_options
 
   fpath=($ENVIRONMENT_LOCATION/zsh_completions/**/ $fpath)
 else
-  shopt -s globstar
+  # make sure bash gets the env var location
+  export ENVIRONMENT_LOCATION="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 fi
+
+export USER_MODULES=$ENVIRONMENT_LOCATION/users
+
+export SOURCE_UTILS=$ENVIRONMENT_LOCATION/modules/00_env_tools
+
 
 no_color='\033[0m' # No Color
 yellow='\033[0;33m'
@@ -172,26 +176,6 @@ function install-default-editor(){
     fi
 }
 
-function install-yadr(){
-    ### install yadr, at least ask once
-    if [ ! -d $HOME/.yadr ]; then
-
-        install_pref=`_readpref "yadr"`
-
-        if [ -z $install_pref ]; then
-            log-warn "Missing yadr.  YADR (yet another dot file repo) is incredibly useful. Do you want to install it? Your preference will be rememembered (y/n)"
-
-            read installYadr
-
-            if [ $installYadr = "y" ]; then
-                sh -c "`curl -fsSL https://raw.githubusercontent.com/skwp/dotfiles/master/install.sh`"
-            else
-                _setpref "yadr" "n"
-            fi
-        fi;
-    fi
-}
-
 function install-brew-cask(){
     # install cask binary installer https://github.com/caskroom/homebrew-cask
     cask_installed=`brew cask`
@@ -203,19 +187,25 @@ function install-brew-cask(){
     fi;
 }
 
+function detect-installed(){
+  hash $1 2>/dev/null
+
+  if [ "$?" = "1" ]; then
+    eval $2
+  fi
+}
+
 function ensure_jq() {
     # command line json parsing
-    hash jq 2>/dev/null || { brew install jq }
+    detect-installed jq "brew install jq"
 }
 
 function install-prereqs(){
-    hash python 2>/dev/null || { brew python }
+    detect-installed python "brew python"
 
-    hash pip 2>/dev/null || { sudo easy_install pip }
+    detect-installed pip  "sudo easy_install pip"
 
-    hash wget  2>/dev/null || { brew install wget }
-
-    install-yadr
+    detect-installed wget "brew install wget"
 
     install-brew-cask
 
@@ -224,43 +214,39 @@ function install-prereqs(){
 
 
 function load-basic-modules(){
-  find $ENVIRONMENT_LOCATION/modules -type f -iname '*.zsh' -print0 | while IFS= read -r -d $'\0' module_file; do
+  while IFS= read -r -d $'\0' module_file; do
         log-info "Loading $module_file"
-        . $module_file
-  done
+        source $module_file
+  done < <(find $ENVIRONMENT_LOCATION/modules -type f -iname '*.zsh' -print0)
 }
 
 function load-user-modules(){
     userModulePath=$ENVIRONMENT_LOCATION/users
 
     if [ -d $userModulePath ]; then
-        ## follow all sym links and load all the files
-        ## (.N) is the zsh global identifier to suppress no results
-        for module_file in `ls -1LRd $userModulePath/*/*.sh(.N)`;
-        do
-            name=`basename $module_file`
+        while IFS= read -r -d $'\0' module_file; do
+          name=`basename $module_file`
 
-            if [[ -f $module_file && $name != "validate.sh" ]]; then
-                log-info "Loading user module $module_file"
+          if [[ -f $module_file && $name != "validate.sh" ]]; then
+              log-info "Loading user module $module_file"
 
-                USER_MODULE_PATH=`dirname \`get_abs_filename $module_file\``
+              USER_MODULE_PATH=`dirname \`get_abs_filename $module_file\``
 
-                source $module_file
-            fi
-        done
+              source $module_file
+          fi
+        done < <(find $userModulePath -type f -iname '*.sh' -follow -print0)
 
         # once they are all loaded, run the validation
 
-        for validation_file in `ls -1LRd $userModulePath/*/validate.sh(.N)`;
-        do
-            if [ -f $validation_file ]; then
-                log-info "Executing validation on user module $module_file"
+        while IFS= read -r -d $'\0' validation_file; do
+          if [ -f $validation_file ]; then
+              log-info "Executing validation on user module $module_file"
 
-                USER_MODULE_PATH=`dirname \`get_abs_filename $validation_file\``
+              USER_MODULE_PATH=`dirname \`get_abs_filename $validation_file\``
 
-                source $validation_file
-            fi
-        done
+              source $validation_file
+          fi
+        done < <(find $userModulePath -type f -iname 'validate.sh' -follow -print0)
     fi
 }
 
@@ -310,22 +296,14 @@ set-permissions
 # load user modules
 load-user-modules
 
-# reload compinit now that everything is loaded up
+# reload compinit if zsh is available now that everything is loaded up
 # so that the updated $fpath variable's folders get
 # read. this lets the custom zsh_completions folder
 # get leveraged
-reload-compinit
+is_zsh=`ps $$ | grep zsh`
+if [ "$?" = "0" ]; then
+  reload-compinit
+fi
 
 # final validation
 validate
-
-if [ "$1" = "bash" ]; then
-  log-info "Path logged to ~/.paths"
-  echo $PATH >! ~/.paths
-
-  rm -rf ~/.aliases
-
-  while read -r line; do
-    echo "alias ${line}" >> ~/.aliases
-  done <<< `alias | grep '='`
-fi
