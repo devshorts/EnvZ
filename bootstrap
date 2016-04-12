@@ -15,6 +15,7 @@ function set_zsh_options(){
 is_zsh=`ps $$ | grep zsh`
 if [ "$?" = "0" ]; then
   export ENVIRONMENT_LOCATION=`dirname $0`
+  export IS_ZSH=true
 
   set_zsh_options
 
@@ -218,6 +219,13 @@ function load-basic-modules(){
         log-info "Loading $module_file"
         source $module_file
   done < <(find $ENVIRONMENT_LOCATION/modules -type f -iname '*.zsh' -print0)
+
+  while IFS= read -r -d $'\0' module_file; do
+        log-info "Loading keys"
+        source $module_file
+  done < <(find $ENVIRONMENT_LOCATION/modules -type f -iname 'keys' -print0)
+
+
 }
 
 function load-user-modules(){
@@ -300,8 +308,7 @@ load-user-modules
 # so that the updated $fpath variable's folders get
 # read. this lets the custom zsh_completions folder
 # get leveraged
-is_zsh=`ps $$ | grep zsh`
-if [ "$?" = "0" ]; then
+if [ "${IS_ZSH}" = "true" ]; then
   reload-compinit
 fi
 
