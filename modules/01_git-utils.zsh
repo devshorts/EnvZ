@@ -1,4 +1,5 @@
 export GIT_BASE_URL="https://github.com"
+export GIT_API_BASE_URL="https://api.github.com"
 
 function create-branch(){
     git checkout -b "$@"
@@ -34,7 +35,7 @@ function resync(){
 }
 
 function git-api(){
-    curl "$GIT_BASE_URL/api/v3/$@?access_token=$GIT_TOKEN"
+    curl "$GIT_API_BASE_URL/$@?access_token=$GIT_TOKEN"
 }
 
 function rollback-release(){
@@ -63,7 +64,7 @@ function rollback-release(){
 }
 
 function latest-pr(){
-    components=(`get-git-components`)
+    components=(`get-git-components $@`)
 
     owner=$components[1]
 
@@ -166,15 +167,19 @@ function pr(){
 }
 
 function get-git-components(){
-    name=`get-git-remote | \
-                sed 's/origin.*git@github\.secureserver\.net://g' | \
-                sed 's/.git (fetch)//g'`
+    remote=$1
+
+    if [ "$remote" == "" ]; then
+      remote="origin"
+    fi
+
+    name=`git config --get remote.${remote}.url | sed 's/:/\//' | sed 's/\.git//'`
 
     components=("${(s|/|)name}")
 
-    owner=$components[1]
+    owner=$components[2]
 
-    repo=$components[2]
+    repo=$components[3]
 
     echo $owner $repo
 }
