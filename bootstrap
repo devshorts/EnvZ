@@ -179,7 +179,7 @@ function install-default-editor(){
 
 function install-brew-cask(){
     # install cask binary installer https://github.com/caskroom/homebrew-cask
-    cask_installed=`brew cask`
+    cask_installed=`brew cask --version`
 
     if [ "$?" != "0" ]; then
         log-warn "Cask not installed, installing..."
