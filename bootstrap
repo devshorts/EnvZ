@@ -204,7 +204,7 @@ function ensure_jq() {
 function install-prereqs(){
     detect-installed python "brew python"
 
-    detect-installed pip  "sudo easy_install pip"
+    detect-installed pip2  "sudo easy_install pip"
 
     detect-installed wget "brew install wget"
 
