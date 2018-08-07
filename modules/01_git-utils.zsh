@@ -166,6 +166,25 @@ function pr(){
     o $url
 }
 
+function gh(){
+  branch=$1
+
+  if [ "$branch" -eq "" ]; then
+    branch="origin"
+  fi
+
+  URL=`git config --get remote.${branch}.url`
+
+  if [[ "$URL" =~ "^git" ]]; then
+    URL=`echo $URL | sed 's/git@//' | sed 's/:/\//'`
+    URL="https://$URL"
+  else
+    URL=`echo $URL | sed 's/\.git//'`
+  fi
+
+  open $URL
+}
+
 function get-git-components(){
     remote=$1
 
@@ -211,8 +230,6 @@ function open-pull-requests(){
 function open-github(){
     o `get-giturl`
 }
-
-alias gh="open-github"
 
 alias lpr="latest-pr"
 
