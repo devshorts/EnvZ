@@ -224,8 +224,6 @@ function load-basic-modules(){
         log-info "Loading keys"
         source $module_file
   done < <(find $ENVIRONMENT_LOCATION/modules -type f -iname 'keys' -print0)
-
-
 }
 
 function load-user-modules(){
@@ -240,10 +238,16 @@ function load-user-modules(){
 
               USER_MODULE_PATH=`dirname \`get_abs_filename $module_file\``
 
-              source $module_file
+              source $module_file            
           fi
         done < <(find $userModulePath -type f -iname '*.sh' -follow -print0)
 
+        # add zsh completion folder to fpath if it exists
+        while IFS= read -r -d $'\0' zsh_completion_folder; do
+          fpath=($zsh_completion_folder $fpath)
+          log-info "Adding $zsh_completion_folder to fpath"        
+        done < <(find $userModulePath -type d -iname 'zsh_completions' -follow -print0)
+        
         # once they are all loaded, run the validation
 
         while IFS= read -r -d $'\0' validation_file; do
