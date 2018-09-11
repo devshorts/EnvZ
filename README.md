@@ -62,6 +62,14 @@ remove-user-env ...
 
 You can add custom validation to your modules that will run after all other modules are run by creating a `validate.sh` file in your module.  This file WILL NOT get run during the initial load, and only run after the fact.
 
+## Zsh autocompletion detection
+
+If your user module has a folder called `zsh_completions` it will automatically get added to the `fpath` for loading
+
+## Validation
+
+If your user module has a file called `validate.sh` it will be executed after your module is loaded as a verification phase
+
 And it will give you autocomplete on your installed plugins
 
 For more information about use cases see this [blog post](http://onoffswitch.net/shareable-zsh-environment-envz/)
