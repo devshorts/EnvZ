@@ -143,4 +143,6 @@ alias e="atom"
 
 alias src="cd $SRC_DIR"
 
-alias ls="ls -lG"
+alias ls="exa -lahF"
+
+alias cat="bat"

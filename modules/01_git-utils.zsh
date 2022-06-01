@@ -231,6 +231,35 @@ function open-github(){
     o `get-giturl`
 }
 
+
+# rebase master
+function rb-master() {
+  curr=`git symbolic-ref --short HEAD`
+  git checkout master
+  git pull
+  git checkout $curr
+  git rebase master
+}
+
+# rebase with master but prefer the master branch for all conflicts
+function rb-master-keep() {
+  curr=`git symbolic-ref --short HEAD`
+  git checkout master
+  git pull
+  git checkout $curr
+  git rebase master -Xours
+}
+
+# rebase with master but prefer the local branch for all conflicts
+function rb-master-discard() {
+  curr=`git symbolic-ref --short HEAD`
+  git checkout master
+  git pull
+  git checkout $curr
+  git rebase master -Xtheirs
+}
+
+
 alias lpr="latest-pr"
 
 alias cm="git commit -m"

@@ -208,11 +208,29 @@ function install-prereqs(){
 
     detect-installed wget "brew install wget"
 
+    detect-installed bat "brew install bat"
+
+    detect-installed diff-so-fancy "brew install diff-so-fancy"
+
+    detect-installed exa "brew install exa"
+
+    detect-installed fd "brew install fd"
+
+    detect-installed rg "brew install ripgrep"
+
+    detect-installed tig "brew install tig"
+
+    detect-installed nvim "brew install nvim"
+
     install-brew-cask
 
     install-default-editor
 }
 
+function aliases() {
+  alias vim='nvim'
+  alias vi='nvim'
+}
 
 function load-basic-modules(){
   while IFS= read -r -d $'\0' module_file; do
@@ -238,16 +256,16 @@ function load-user-modules(){
 
               USER_MODULE_PATH=`dirname \`get_abs_filename $module_file\``
 
-              source $module_file            
+              source $module_file
           fi
         done < <(find $userModulePath -type f -iname '*.sh' -follow -print0)
 
         # add zsh completion folder to fpath if it exists
         while IFS= read -r -d $'\0' zsh_completion_folder; do
           fpath=($zsh_completion_folder $fpath)
-          log-info "Adding $zsh_completion_folder to fpath"        
+          log-info "Adding $zsh_completion_folder to fpath"
         done < <(find $userModulePath -type d -iname 'zsh_completions' -follow -print0)
-        
+
         # once they are all loaded, run the validation
 
         while IFS= read -r -d $'\0' validation_file; do
@@ -315,6 +333,8 @@ load-user-modules
 if [ "${IS_ZSH}" = "true" ]; then
   reload-compinit
 fi
+
+aliases
 
 # final validation
 validate
