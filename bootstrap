@@ -159,39 +159,11 @@ function _readpref(){
     json_get_pref $1
 }
 
-function install-default-editor(){
-    edit_pref=`_readpref "editor"`
-
-    if [ -z $edit_pref ] && ! hash atom 2>/dev/null; then
-        log-warn "Would you like to install a default user editor? Atom is free and can be installed with cask"
-        log-warn "If you would like to install this? It is recommended (y/n)"
-
-        read installAtom
-
-        if [ $installAtom = "y" ]; then
-            brew cask install atom
-            _setpref "editor" "y"
-        else
-            _setpref "editor" "n"
-        fi
-    fi
-}
-
-function install-brew-cask(){
-    # install cask binary installer https://github.com/caskroom/homebrew-cask
-    cask_installed=`brew --version`
-
-    if [ "$?" != "0" ]; then
-        log-warn "Cask not installed, installing..."
-
-        brew install caskroom/cask/brew-cask
-    fi;
-}
-
 function detect-installed(){
-  hash $1 2>/dev/null
+  type $1 1> /dev/null 2> /dev/null
 
   if [ "$?" = "1" ]; then
+    echo "Installing $2"
     eval $2
   fi
 }
@@ -202,11 +174,9 @@ function ensure_jq() {
 }
 
 function install-prereqs(){
-    detect-installed python "brew python"
-
-    detect-installed pip  "sudo easy_install pip"
-
     detect-installed wget "brew install wget"
+
+    detect-installed fzf 'brew install fzf && $(brew --prefix)/opt/fzf/install'
 
     detect-installed bat "brew install bat"
 
@@ -221,10 +191,6 @@ function install-prereqs(){
     detect-installed tig "brew install tig"
 
     detect-installed nvim "brew install nvim"
-
-    install-brew-cask
-
-    install-default-editor
 }
 
 function aliases() {
