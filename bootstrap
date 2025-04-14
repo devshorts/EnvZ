@@ -182,7 +182,7 @@ function install-prereqs(){
 
     detect-installed diff-so-fancy "brew install diff-so-fancy"
 
-    detect-installed exa "brew install exa"
+    detect-installed eza "brew install eza"
 
     detect-installed fd "brew install fd"
 
